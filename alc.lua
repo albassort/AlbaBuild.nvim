@@ -144,21 +144,32 @@ local RunCommand = function(ops)
 		return
 	end
 
-	if jsonResult[index] == nil then
+	local jsonBuildCommands = jsonResult.buildCommands
+	local envVars = jsonResult.envVars
+
+	envVars["BUF"] = vim.api.nvim_buf_get_name(0)
+
+	print(index)
+	print("!!!!")
+	if jsonBuildCommands[index] == nil then
 		print("Index out of bounds; the json is supposed to be array of objects")
 		return
 	end
-	if jsonResult[index].cwd == nil or jsonResult[index].shell_cmd == nil or jsonResult[index].name == nill then
+	if
+		jsonBuildCommands[index].cwd == nil
+		or jsonBuildCommands[index].shell_cmd == nil
+		or jsonBuildCommands[index].name == nil
+	then
 		print("name, shell_cmd, and, cwd are all required fields, but one of them was not found.")
 		return
 	end
 
 	local entries = {}
-	for i, value in ipairs(jsonResult) do
+	for i, value in ipairs(jsonBuildCommands) do
 		table.insert(entries, value.name)
 	end
 
-	local relapth = Path:new(dir):joinpath(jsonResult[index].cwd)
+	local relapth = Path:new(dir):joinpath(jsonBuildCommands[index].cwd)
 	if relapth:exists() == false then
 		print("The cwd provided does not exist!")
 		return
@@ -168,10 +179,10 @@ local RunCommand = function(ops)
 	local time = os.time()
 	Job:new({
 		command = "sh",
-		args = { "-c", jsonResult[index].shell_cmd },
+		args = { "-c", jsonBuildCommands[index].shell_cmd },
 		stderr_to_stdout = true,
 		cwd = relapth:absolute(),
-		env = { ["BUF"] = vim.api.nvim_buf_get_name(0) },
+		env = envVars,
 		on_stdout = function(_, line)
 			if line then
 				table.insert(std, line)
@@ -191,18 +202,18 @@ local RunCommand = function(ops)
 
 			vim.defer_fn(function()
 				vim.notify(
-					"Your job: " .. jsonResult[index].name .. ", has exited: " .. returny,
+					"Your job: " .. jsonBuildCommands[index].name .. ", has exited: " .. returny,
 					vim.log.levels.INFO,
 					{ title = "MyStatus" }
 				)
-				if jsonResult[index].print_result == true then
+				if jsonBuildCommands[index].print_result == true then
 				end
-				if jsonResult[index].autoopen == true then
-					open_popup(std, time, jsonResult[index].name, return_val)
+				if jsonBuildCommands[index].autoopen == true then
+					open_popup(std, time, jsonBuildCommands[index].name, return_val)
 				end
 			end, 20)
 
-			_G.addToTest(tostring(time) .. " " .. jsonResult[index].name, test)
+			_G.addToTest(tostring(time) .. " " .. jsonBuildCommands[index].name, test)
 		end,
 	}):start()
 end
