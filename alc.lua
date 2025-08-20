@@ -115,7 +115,6 @@ local RunCommand = function(ops)
 		command = "git",
 		args = { "rev-parse", "--show-toplevel" },
 		cwd = dir,
-		-- env = { ["a"] = "b" },
 		on_exit = function(j, return_val)
 			local result = j:result()
 			topMostGit = result[1]
@@ -172,8 +171,7 @@ local RunCommand = function(ops)
 		args = { "-c", jsonResult[index].shell_cmd },
 		stderr_to_stdout = true,
 		cwd = relapth:absolute(),
-		-- env = { ["a"] = "b" },
-		--
+		env = { ["BUF"] = vim.api.nvim_buf_get_name(0) },
 		on_stdout = function(_, line)
 			if line then
 				table.insert(std, line)
