@@ -6,7 +6,6 @@ local Path = require("plenary.path")
 
 vim.keymap.set("n", "gw", vim.diagnostic.open_float, { desc = "Show diagnostics under cursor" })
 
---https://zenn.dev/kawarimidoll/scraps/d51d3407a5bd3b
 string.gfind = function(str, pattern)
 	local from_idx = nil
 	local to_idx = 0
@@ -16,7 +15,6 @@ string.gfind = function(str, pattern)
 	end
 end
 
---https://zenn.dev/kawarimidoll/scraps/d51d3407a5bd3b
 string.split = function(str, pattern)
 	local p = 1
 	local result = {}
@@ -31,18 +29,31 @@ end
 
 local str = "oil:///my/path/"
 local pattern = "://"
-print(vim.inspect(string.split(str, pattern)))
+--print(vim.inspect(string.split(str, pattern)))
+
 _G.test = _G.test or {}
 function _G.addToTest(key, val)
 	_G.test[key] = val
 end
-
 function _G.getTest()
 	return _G.test
 end
-
 function _G.restTest()
 	_G.test = {}
+end
+
+_G.ongoingPid = _G.ongoingPid or {}
+function _G.addNewOnGoing(pid, commandName, timeStarted)
+	_G.ongoingPid[pid] = { std = {}, commandName = commandName, timeStarted = timeStarted }
+end
+function _G.addToOngoingStd(pid, line)
+	table.insert(_G.ongoingPid[pid].std, line)
+end
+function _G.removeOngoig(pid)
+	_G.ongoingPid[pid] = nil
+end
+function _G.getOngoing()
+	return _G.ongoingPid
 end
 
 local function open_popup(buff, time, name, result_val)
@@ -78,7 +89,7 @@ local function open_popup(buff, time, name, result_val)
 	vim.bo.buftype = "nofile"
 	vim.bo.bufhidden = "hide"
 	vim.bo.swapfile = false
-
+	vim.cmd("stopinsert")
 	vim.keymap.set("n", "q", function()
 		vim.api.nvim_win_close(win, true)
 	end, { buffer = buf })
@@ -133,9 +144,8 @@ local RunCommand = function(ops)
 	end
 
 	local success, jsonResult = pcall(function()
-		-- risky code here
 		local buildData = pathTest:read()
-		print(buildData)
+		--  print(buildData)
 		return vim.fn.json_decode(buildData)
 	end)
 
@@ -146,11 +156,17 @@ local RunCommand = function(ops)
 
 	local jsonBuildCommands = jsonResult.buildCommands
 	local envVars = jsonResult.envVars
-
 	envVars["BUF"] = vim.api.nvim_buf_get_name(0)
 
-	print(index)
-	print("!!!!")
+	for i, a in ipairs(ops.fargs) do
+		if i ~= 1 then
+			envVars["ARG" .. tostring(i - 1)] = a
+		end
+	end
+
+	-- print(vim.inspect(envVars))
+	-- print(vim.inspect(ops.fargs))
+
 	if jsonBuildCommands[index] == nil then
 		print("Index out of bounds; the json is supposed to be array of objects")
 		return
@@ -174,22 +190,24 @@ local RunCommand = function(ops)
 		print("The cwd provided does not exist!")
 		return
 	end
-	print(relapth)
+	--print(relapth)
 	local std = {}
 	local time = os.time()
-	Job:new({
+	local j = Job:new({
 		command = "sh",
 		args = { "-c", jsonBuildCommands[index].shell_cmd },
 		stderr_to_stdout = true,
 		cwd = relapth:absolute(),
 		env = envVars,
-		on_stdout = function(_, line)
+		on_stdout = function(_, line, j)
 			if line then
+				addToOngoingStd(j.pid, line)
 				table.insert(std, line)
 			end
 		end,
-		on_stderr = function(_, line)
+		on_stderr = function(_, line, j)
 			if line then
+				addToOngoingStd(j.pid, line)
 				table.insert(std, line)
 			end
 		end,
@@ -212,10 +230,14 @@ local RunCommand = function(ops)
 					open_popup(std, time, jsonBuildCommands[index].name, return_val)
 				end
 			end, 20)
-
+			removeOngoig(j.pid)
 			_G.addToTest(tostring(time) .. " " .. jsonBuildCommands[index].name, test)
 		end,
-	}):start()
+	})
+
+	j:start()
+
+	addNewOnGoing(j.pid, jsonBuildCommands[index].name, time)
 end
 
 function ShowResults()
@@ -228,7 +250,7 @@ function ShowResults()
 		table.insert(buffs, v)
 	end
 
-	print(vim.inspect(keys))
+	--print(vim.inspect(keys))
 
 	table.sort(keys, function(k1, k2)
 		return test[k1].time > test[k2].time
@@ -239,7 +261,7 @@ function ShowResults()
 	local opts = opts or {}
 	pickers
 		.new(opts, {
-			prompt_title = "RunCommand",
+			prompt_title = "Command logs. Enter to open, Q to close",
 			finder = finders.new_table({
 				results = keys,
 
@@ -261,6 +283,7 @@ function ShowResults()
 			sorter = conf.generic_sorter(opts),
 			attach_mappings = function(c, map)
 				map("i", "<enter>", function()
+					vim.cmd("stopinsert")
 					vim.cmd("new")
 					local key = keys[currentIndex]
 					vim.api.nvim_buf_set_lines(0, 0, -1, false, test[key].buff)
@@ -269,6 +292,60 @@ function ShowResults()
 					vim.bo.bufhidden = "hide"
 					vim.bo.swapfile = false
 				end)
+				map("i", "q", function()
+					require("telescope.actions").close(c)
+				end)
+				return true
+			end,
+		})
+		:find()
+end
+
+function ShowOngoing()
+	local test = getOngoing()
+	local keys = {}
+	local buffs = {}
+
+	for k, v in pairs(test) do
+		table.insert(keys, tostring(k))
+		table.insert(buffs, v)
+	end
+
+	--print(vim.inspect(keys))
+
+	table.sort(keys, function(k1, k2)
+		return test[tonumber(k1)].timeStarted > test[tonumber(k2)].timeStarted
+	end)
+
+	local currentIndex = 1
+	local conf = require("telescope.config").values
+	local opts = opts or {}
+	pickers
+		.new(opts, {
+			prompt_title = "Kill ongoing task. Enter to kill, Q to exit",
+			finder = finders.new_table({
+				results = keys,
+			}),
+			previewer = previewers.new_buffer_previewer({
+				define_preview = function(self, entry, status)
+					currentIndex = entry.index
+					local key = keys[currentIndex]
+					vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, test[tonumber(key)].std)
+				end,
+			}),
+			sorter = conf.generic_sorter(opts),
+			attach_mappings = function(c, map)
+				map("i", "<enter>", function()
+					local key = keys[currentIndex]
+					Job:new({
+						command = "kill",
+						args = { key },
+					}):sync()
+				end)
+				map("i", "q", function()
+					require("telescope.actions").close(c)
+				end)
+
 				return true
 			end,
 		})
@@ -276,8 +353,11 @@ function ShowResults()
 end
 -- to execute the function
 
-vim.api.nvim_create_user_command("ABExecute", RunCommand, { nargs = 1 })
+vim.api.nvim_create_user_command("ABExecute", RunCommand, { nargs = "+" })
+
 vim.api.nvim_create_user_command("ABView", ShowResults, {})
+
+vim.api.nvim_create_user_command("ABShowOngoing", ShowOngoing, {})
 
 vim.keymap.set("n", "<leader>xb1", "<cmd>ABExecute 1<cr>", {})
 vim.keymap.set("n", "<leader>xb2", "<cmd>ABExecute 2<cr>", {})
@@ -290,5 +370,9 @@ vim.keymap.set("n", "<leader>xb8", "<cmd>ABExecute 8<cr>", {})
 vim.keymap.set("n", "<leader>xb9", "<cmd>ABExecute 9<cr>", {})
 
 vim.keymap.set("n", "<leader>xbs", "<cmd>ABView<cr>", {})
+
+vim.keymap.set("n", "<leader>xbr", restTest, { noremap = true, silent = true })
+
+vim.keymap.set("n", "<leader>xba", ShowOngoing, { noremap = true, silent = true })
 
 --vim.keymap.set("n", "<leader>xbl", "<cmd>:source ~/.config/nvim/lua/config/keymaps.lua <CR>")
