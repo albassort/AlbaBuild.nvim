@@ -1,0 +1,35 @@
+{
+  "env_vars": {
+    "Meow": "ニャア"
+  },
+  "build_commands": {
+    "1": {
+      "name": "Hello, World!",
+      "shell_cmd": "echo 'Hello, World!' ",
+      "cwd": ".",
+      "autoopen": true,
+      "print_result": false
+    },
+    "2": {
+      "name": "Kill test",
+      "shell_cmd": "while true; do date +'%Y-%m-%d %H%M:%S'; sleep 1 ; done",
+      "cwd": ".",
+      "autoopen": true,
+      "print_result": false
+    },
+    "3": {
+      "name": "env_var test",
+      "shell_cmd": "echo $Meow",
+      "cwd": ".",
+      "autoopen": true,
+      "print_result": false
+    },
+    "4": {
+      "name": "Args Test",
+      "shell_cmd": "echo $ARG1",
+      "cwd": ".",
+      "autoopen": true,
+      "print_result": false
+    }
+  }
+}

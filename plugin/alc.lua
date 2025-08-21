@@ -173,28 +173,28 @@ alb.RunCommand = function(ops, output, useSync)
 		return
 	end
 
-	local jsonBuildCommands = jsonResult.buildCommands
-	local envVars = jsonResult.envVars
-	envVars["BUF"] = vim.api.nvim_buf_get_name(0)
+	local jsonBuildCommands = jsonResult.build_commands
+	local env_vars = jsonResult.env_vars
+	env_vars["BUF"] = vim.api.nvim_buf_get_name(0)
 	if output == nil then
 		for i, a in ipairs(ops.fargs) do
 			if i ~= 1 then
-				envVars["ARG" .. tostring(i - 1)] = a
+				env_vars["ARG" .. tostring(i - 1)] = a
 			end
 		end
 	end
 
-	-- print(vim.inspect(envVars))
+	-- print(vim.inspect(env_vars))
 	-- print(vim.inspect(ops.fargs))
-
-	if jsonBuildCommands[index] == nil then
+	local jsonBuildCommandsSelected = jsonBuildCommands[index] or jsonBuildCommands[tostring(index)]
+	if jsonBuildCommandsSelected == nil then
 		print("Index out of bounds; the json is supposed to be array of objects")
 		return
 	end
 	if
-		jsonBuildCommands[index].cwd == nil
-		or jsonBuildCommands[index].shell_cmd == nil
-		or jsonBuildCommands[index].name == nil
+		jsonBuildCommandsSelected.cwd == nil
+		or jsonBuildCommandsSelected.shell_cmd == nil
+		or jsonBuildCommandsSelected.name == nil
 	then
 		print("name, shell_cmd, and, cwd are all required fields, but one of them was not found.")
 		return
@@ -205,7 +205,7 @@ alb.RunCommand = function(ops, output, useSync)
 		table.insert(entries, value.name)
 	end
 
-	local relapth = Path:new(dir):joinpath(jsonBuildCommands[index].cwd)
+	local relapth = Path:new(dir):joinpath(jsonBuildCommandsSelected.cwd)
 	if relapth:exists() == false then
 		print("The cwd provided does not exist!")
 		return
@@ -215,11 +215,11 @@ alb.RunCommand = function(ops, output, useSync)
 	local time = os.time()
 
 	-- Hard coding the envvars meerge because sometimes they wouldn't for some reason.
-	local env = vim.tbl_extend("force", vim.fn.environ(), envVars)
-	local name = tostring(time) .. " " .. jsonBuildCommands[index].name
+	local env = vim.tbl_extend("force", vim.fn.environ(), env_vars)
+	local name = tostring(time) .. " " .. jsonBuildCommandsSelected.name
 	local j = Job:new({
 		command = "sh",
-		args = { "-c", jsonBuildCommands[index].shell_cmd },
+		args = { "-c", jsonBuildCommandsSelected.shell_cmd },
 		stderr_to_stdout = true,
 		cwd = relapth:absolute(),
 		env = env,
@@ -243,12 +243,12 @@ alb.RunCommand = function(ops, output, useSync)
 			}
 
 			vim.defer_fn(function()
-				vim.notify("Your job: " .. jsonBuildCommands[index].name .. ", has exited: " .. returny)
+				vim.notify("Your job: " .. jsonBuildCommandsSelected.name .. ", has exited: " .. returny)
 
-				if jsonBuildCommands[index].print_result == true then
+				if jsonBuildCommandsSelected.print_result == true then
 				end
-				if jsonBuildCommands[index].autoopen == true then
-					open_popup(std, time, jsonBuildCommands[index].name, return_val)
+				if jsonBuildCommandsSelected.autoopen == true then
+					open_popup(std, time, jsonBuildCommandsSelected.name, return_val)
 				end
 			end, 20)
 			removeOngoig(j.pid)
@@ -265,9 +265,9 @@ alb.RunCommand = function(ops, output, useSync)
 	else
 		j:start()
 	end
-	vim.notify("Your job: " .. jsonBuildCommands[index].name .. ", has started ")
+	vim.notify("Your job: " .. jsonBuildCommandsSelected.name .. ", has started ")
 
-	addNewOnGoing(j.pid, jsonBuildCommands[index].name, time)
+	addNewOnGoing(j.pid, jsonBuildCommandsSelected.name, time)
 end
 
 function ShowResults()
@@ -336,6 +336,7 @@ function ShowResults()
 end
 
 function ShowOngoing()
+	local Job = require("plenary.job")
 	local pickers = require("telescope.pickers")
 	local finders = require("telescope.finders")
 	local previewers = require("telescope.previewers")
@@ -360,7 +361,7 @@ function ShowOngoing()
 	local opts = opts or {}
 	pickers
 		.new(opts, {
-			prompt_title = "Kill ongoing task. Enter to kill, Q to exit",
+			prompt_title = "Kill ongoing task. Enter to kill, Q to exit, O to open",
 			finder = finders.new_table({
 				results = keys,
 			}),
@@ -382,6 +383,17 @@ function ShowOngoing()
 				end)
 				map("i", "q", function()
 					require("telescope.actions").close(c)
+				end)
+				map("i", "o", function()
+					require("telescope.actions").close(c)
+					vim.cmd("stopinsert")
+					vim.cmd("new")
+					local key = keys[currentIndex]
+					vim.api.nvim_buf_set_lines(0, 0, -1, false, test[tonumber(key)].std)
+					vim.bo.modifiable = false
+					vim.bo.buftype = "nofile"
+					vim.bo.bufhidden = "hide"
+					vim.bo.swapfile = false
 				end)
 
 				return true
@@ -408,10 +420,11 @@ vim.keymap.set("n", "<leader>xb8", "<cmd>ABExecute 8<cr>", {})
 vim.keymap.set("n", "<leader>xb9", "<cmd>ABExecute 9<cr>", {})
 
 vim.keymap.set("n", "<leader>xbs", "<cmd>ABView<cr>", {})
+vim.keymap.set("n", "<leader>xba", "<cmd>ABShowOngoing<cr>", {})
 
-vim.keymap.set("n", "<leader>xbr", resetABLogs, { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<leader>xb5", ":ABExecute 5 ", {})
 
-vim.keymap.set("n", "<leader>xba", ShowOngoing, { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<leader>xb0", ":ABExecute ", {})
 --v-vim.keymap.set("n", "<leader>xbl", "<cmd>:source ~/.config/nvim/lua/config/keymaps.lua <CR>")
 
 return alb
