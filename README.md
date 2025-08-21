@@ -57,7 +57,7 @@ When the command is executed, it merges the env_vars with the default system env
 The commands are given in an array. The array can be formatted in two different ways as per the json spec
 ```json
 {
-    build_commands: 
+    "build_commands": 
         [
             {
               "name": "Hello, World!",
@@ -70,7 +70,7 @@ The commands are given in an array. The array can be formatted in two different 
 ```
 ```json
 {
-    build_commands: 
+    "build_commands": 
         {
         
             "1" : 
@@ -154,16 +154,13 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 
 ```json
 {
-    build_commands: 
-        {
-            "1": 
-                {
-                  "name": "Nvim Args Example",
-                  "shell_cmd": "I like $ARG1 and I also like $ARG2",
-                  "cwd": "./src/",
-
-                }
-        }
+  "build_commands": {
+    "1": {
+      "name": "Nvim Args Example",
+      "shell_cmd": "I like $ARG1 and I also like $ARG2",
+      "cwd": "./src/"
+    }
+  }
 }
 ```
 - When executed with `ABExecute 1 Cats Cows` you get `I like Cats and I also like Cows`
