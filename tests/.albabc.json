@@ -1,0 +1,18 @@
+{
+  "envVars": {
+    "WALADR": "bcrt1q5ezrg7u0v43g0dvya2m85f8h2ftd9r5839xme7",
+    "RPCP": "password1",
+    "RPCU": "user1",
+    "RPCX": "/mnt/btc/bitcoin-28.0/bin/bitcoin-cli",
+    "RPCPORT": "18011"
+  },
+  "buildCommands": [
+    {
+      "name": "Hello, World!",
+      "shell_cmd": "echo 'Hello, World2!' ",
+      "cwd": ".",
+      "autoopen": true,
+      "print_result": false
+    }
+  ]
+}

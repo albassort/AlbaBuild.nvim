@@ -1,8 +1,4 @@
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local previewers = require("telescope.previewers")
-local Job = require("plenary.job")
-local Path = require("plenary.path")
+local alb = {}
 
 vim.keymap.set("n", "gw", vim.diagnostic.open_float, { desc = "Show diagnostics under cursor" })
 
@@ -31,30 +27,32 @@ local str = "oil:///my/path/"
 local pattern = "://"
 --print(vim.inspect(string.split(str, pattern)))
 
-_G.test = _G.test or {}
-function _G.addToTest(key, val)
-	_G.test[key] = val
+_G.ABLogs = _G.ABLogs or {}
+function _G.addToABLogs(key, val)
+	_G.ABLogs[key] = val
 end
-function _G.getTest()
-	return _G.test
+function _G.getABLogs()
+	return _G.ABLogs
 end
-function _G.restTest()
-	_G.test = {}
+alb.getABLogs = _G.getABLogs
+function _G.resetABLogs()
+	_G.ABLogs = {}
 end
 
-_G.ongoingPid = _G.ongoingPid or {}
+_G.OngoingPid = _G.OngoingPid or {}
 function _G.addNewOnGoing(pid, commandName, timeStarted)
-	_G.ongoingPid[pid] = { std = {}, commandName = commandName, timeStarted = timeStarted }
+	_G.OngoingPid[pid] = { std = {}, commandName = commandName, timeStarted = timeStarted }
 end
 function _G.addToOngoingStd(pid, line)
-	table.insert(_G.ongoingPid[pid].std, line)
+	table.insert(_G.OngoingPid[pid].std, line)
 end
 function _G.removeOngoig(pid)
-	_G.ongoingPid[pid] = nil
+	_G.OngoingPid[pid] = nil
 end
 function _G.getOngoing()
-	return _G.ongoingPid
+	return _G.OngoingPid
 end
+alb.getOngoing = _G.getOngoing
 
 local function open_popup(buff, time, name, result_val)
 	local buf = vim.api.nvim_create_buf(false, true)
@@ -95,14 +93,28 @@ local function open_popup(buff, time, name, result_val)
 	end, { buffer = buf })
 end
 
-local RunCommand = function(ops)
-	local index = tonumber(ops.fargs[1])
+-- parses and executes jobs.
+-- When testing execute wherein output = {} and ops = the command you intend to execute.
+-- e.g RunCommand(1, passByRef)
+--
+alb.RunCommand = function(ops, output, useSync)
+	local fileName = ".albabc.json"
+	local Job = require("plenary.job")
+	local Path = require("plenary.path")
+
+	output = output or nil -- explicitly set default
+	local index
+	if output == nil then
+		index = tonumber(ops.fargs[1])
+	else
+		index = ops
+	end
 
 	local topMostGit = nil
 	local path = vim.api.nvim_buf_get_name(0)
 
-	if path == nil then
-		return
+	if path == nil or string.len(path) == 0 then
+		path = vim.fn.getcwd()
 	end
 
 	local split = string.split(path, ":/")
@@ -121,30 +133,37 @@ local RunCommand = function(ops)
 	else
 		dir = root
 	end
+	local targetCommands = nil
+	local immediate = Path:new(dir):joinpath(fileName)
 
-	Job:new({
-		command = "git",
-		args = { "rev-parse", "--show-toplevel" },
-		cwd = dir,
-		on_exit = function(j, return_val)
-			local result = j:result()
-			topMostGit = result[1]
-		end,
-	}):sync() --
+	if immediate:exists() then
+		targetCommands = Path:new(immediate:absolute())
+	else
+		Job:new({
+			command = "git",
+			args = { "rev-parse", "--show-toplevel" },
+			cwd = dir,
+			on_exit = function(j, return_val)
+				local result = j:result()
+				topMostGit = result[1]
+			end,
+		}):sync() --
 
-	if topMostGit == nil then
-		print("buff is not in a git!")
-		return
+		if topMostGit == nil then
+			print("buff is not in a git!")
+			return
+		end
+		print("HERE!")
+
+		targetCommands = Path:new(topMostGit):joinpath(fileName)
 	end
-
-	local pathTest = Path:new(topMostGit):joinpath(".albabc.json")
-	if pathTest:exists() == false then
-		print(".albabc.json does not exist")
+	if targetCommands:exists() == false then
+		print(".albabc.json does not exist in " .. targetCommands:absolute() .. " from path " .. path)
 		return
 	end
 
 	local success, jsonResult = pcall(function()
-		local buildData = pathTest:read()
+		local buildData = targetCommands:read()
 		--  print(buildData)
 		return vim.fn.json_decode(buildData)
 	end)
@@ -157,10 +176,11 @@ local RunCommand = function(ops)
 	local jsonBuildCommands = jsonResult.buildCommands
 	local envVars = jsonResult.envVars
 	envVars["BUF"] = vim.api.nvim_buf_get_name(0)
-
-	for i, a in ipairs(ops.fargs) do
-		if i ~= 1 then
-			envVars["ARG" .. tostring(i - 1)] = a
+	if output == nil then
+		for i, a in ipairs(ops.fargs) do
+			if i ~= 1 then
+				envVars["ARG" .. tostring(i - 1)] = a
+			end
 		end
 	end
 
@@ -193,12 +213,16 @@ local RunCommand = function(ops)
 	--print(relapth)
 	local std = {}
 	local time = os.time()
+
+	-- Hard coding the envvars meerge because sometimes they wouldn't for some reason.
+	local env = vim.tbl_extend("force", vim.fn.environ(), envVars)
+	local name = tostring(time) .. " " .. jsonBuildCommands[index].name
 	local j = Job:new({
 		command = "sh",
 		args = { "-c", jsonBuildCommands[index].shell_cmd },
 		stderr_to_stdout = true,
 		cwd = relapth:absolute(),
-		env = envVars,
+		env = env,
 		on_stdout = function(_, line, j)
 			if line then
 				addToOngoingStd(j.pid, line)
@@ -219,11 +243,8 @@ local RunCommand = function(ops)
 			}
 
 			vim.defer_fn(function()
-				vim.notify(
-					"Your job: " .. jsonBuildCommands[index].name .. ", has exited: " .. returny,
-					vim.log.levels.INFO,
-					{ title = "MyStatus" }
-				)
+				vim.notify("Your job: " .. jsonBuildCommands[index].name .. ", has exited: " .. returny)
+
 				if jsonBuildCommands[index].print_result == true then
 				end
 				if jsonBuildCommands[index].autoopen == true then
@@ -231,17 +252,30 @@ local RunCommand = function(ops)
 				end
 			end, 20)
 			removeOngoig(j.pid)
-			_G.addToTest(tostring(time) .. " " .. jsonBuildCommands[index].name, test)
+			_G.addToABLogs(name, test)
 		end,
 	})
 
-	j:start()
+	if output ~= nil then
+		output[0] = name
+	end
+
+	if useSync then
+		j:sync()
+	else
+		j:start()
+	end
+	vim.notify("Your job: " .. jsonBuildCommands[index].name .. ", has started ")
 
 	addNewOnGoing(j.pid, jsonBuildCommands[index].name, time)
 end
 
 function ShowResults()
-	local test = getTest()
+	local pickers = require("telescope.pickers")
+	local finders = require("telescope.finders")
+	local previewers = require("telescope.previewers")
+
+	local test = getABLogs()
 	local keys = {}
 	local buffs = {}
 
@@ -302,6 +336,10 @@ function ShowResults()
 end
 
 function ShowOngoing()
+	local pickers = require("telescope.pickers")
+	local finders = require("telescope.finders")
+	local previewers = require("telescope.previewers")
+
 	local test = getOngoing()
 	local keys = {}
 	local buffs = {}
@@ -353,7 +391,7 @@ function ShowOngoing()
 end
 -- to execute the function
 
-vim.api.nvim_create_user_command("ABExecute", RunCommand, { nargs = "+" })
+vim.api.nvim_create_user_command("ABExecute", alb.RunCommand, { nargs = "+" })
 
 vim.api.nvim_create_user_command("ABView", ShowResults, {})
 
@@ -371,8 +409,9 @@ vim.keymap.set("n", "<leader>xb9", "<cmd>ABExecute 9<cr>", {})
 
 vim.keymap.set("n", "<leader>xbs", "<cmd>ABView<cr>", {})
 
-vim.keymap.set("n", "<leader>xbr", restTest, { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>xbr", resetABLogs, { noremap = true, silent = true })
 
 vim.keymap.set("n", "<leader>xba", ShowOngoing, { noremap = true, silent = true })
+--v-vim.keymap.set("n", "<leader>xbl", "<cmd>:source ~/.config/nvim/lua/config/keymaps.lua <CR>")
 
---vim.keymap.set("n", "<leader>xbl", "<cmd>:source ~/.config/nvim/lua/config/keymaps.lua <CR>")
+return alb
