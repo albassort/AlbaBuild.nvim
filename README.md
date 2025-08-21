@@ -2,6 +2,9 @@
 - Telescope
 - Plenary
 
+# Platform Support
+I am a Linux developer. I am not a Windows, MacOs, (prefix)BSD(suffix) developer. I develop things for Linux. There is **no reason** for this to break on any mainstream distro, consequently, there is no reason for it to work on any non-Linux operating system. **If you wish to make it work on your OS, please make a PR.**
+
 # File placement
 To specify the given build commands you want, you must, of course, have them be on disk. The places I find most convenient is in the git root.
 
@@ -26,7 +29,7 @@ To specify the given build commands you want, you must, of course, have them be 
 In all cases `git rev-parse --show-toplevel` is executed to determine the root of the directory, and thus, the primary .albabc to be used.
 # Json Format
 ## EnvVars 
-EnvVars can be specified in an "env_vars" block on the root of the build commands.
+EnvVars can be specified in an "env_vars" block on the root of the build commands. But, specifying env_vars is **not required**.
 ```json
 {
     env_vars: 
@@ -116,8 +119,8 @@ The latter is less ambiguous; holes are allowed, you don't need to be sequential
 ```
 This allows for an easily configurable, portable unix focused testing apparatus. Developers can replace the envvars and build commands become usable to them.
 
-# Notes
-## Maximum number of commands 
+## Notes
+### Maximum number of commands 
 This is **no maximum** number of commands. ABExecute, as described below, takes in an arbitrary integer. In the suggested keymap, <leader>xb0 fills the command with ABExecute but without cr, to make arbitrary indexes and using arguments easier 
 
 # Recommended keybinds 
@@ -147,7 +150,23 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 ### Arg 1
 - The first arg for ABExecute is the indice of the command. There is no max amount of commands that can be bound, but it is necessary that the json is in array format.
 ### Arg 2 +
-Each argument after the first argument is bound to $ARGV and the corresponding number of arguments from the first additional argument. `ABExecute 1 MyValue`, MyValue is then bound to $ARG1 
+- Each argument after the first argument is bound to $ARGV and the corresponding number of arguments from the first additional argument. e.g 
+
+```json
+{
+    build_commands: 
+        {
+            "1": 
+                {
+                  "name": "Nvim Args Example",
+                  "shell_cmd": "I like $ARG1 and I also like $ARG2",
+                  "cwd": "./src/",
+
+                }
+        }
+}
+```
+- When executed with `ABExecute 1 Cats Cows` you get `I like Cats and I also like Cows`
 
 # ABView
 ABView opens a telescope with all commands executed, from oldest to newest. Hitting enter will open, in a new buffer
@@ -177,3 +196,4 @@ Perhaps a more builtin nvim way could be implemented to automate it. Further inv
 
 # Donate
 If you like this plugin and wish to support me, I have a donate page at https://donate.albassort.com where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.
+
