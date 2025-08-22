@@ -60,8 +60,10 @@ When the command is executed, it merges the env_vars with the default system env
 ### Optional values
 - "autoopen" (bool): Automatically opens the command output 
 - "print_result" (bool): prints the result using nvim print(), lighter than auto open, same principle 
-- "autoopen_whitelist" (array[int]): if the return code is equal to any of these values, perform autoopen. This is incompatible with autoopen_blacklist
-- "autoopen_blacklist" (array[int]): if the return code not is equal to any of these values, perform autoopen. This is incompatible with autoopen_whitelist
+- "autoopen_whitelist" (array[int]): If the return code is equal to any of these values, perform autoopen. This is incompatible with autoopen_blacklist
+- "autoopen_blacklist" (array[int]): If the return code not is equal to any of these values, perform autoopen. This is incompatible with autoopen_whitelist
+- "print_ongoing" (bool): If  you wish to be notified as a program is ongoing, of the std and stderr outputs, this will print them in the status line.
+
 ### Format
 The commands are given in an array. The array can be formatted in two different ways as per the json spec
 ```json

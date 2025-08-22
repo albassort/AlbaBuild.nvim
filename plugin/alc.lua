@@ -61,6 +61,7 @@ end
 function _G.getOngoing()
 	return _G.OngoingPid
 end
+
 alb.getOngoing = _G.getOngoing
 
 local function open_popup(buff, time, name, result_val)
@@ -184,7 +185,7 @@ alb.RunCommand = function(ops, output, useSync)
 	end
 
 	local jsonBuildCommands = jsonResult.build_commands
-	local env_vars = jsonResult.env_vars
+	local env_vars = jsonResult.env_vars or {}
 	env_vars["BUF"] = vim.api.nvim_buf_get_name(0)
 	if output == nil then
 		for i, a in ipairs(ops.fargs) do
@@ -250,12 +251,22 @@ alb.RunCommand = function(ops, output, useSync)
 		env = env,
 		on_stdout = function(_, line, j)
 			if line then
+				if jsonBuildCommandsSelected.print_ongoing then
+					vim.schedule_wrap(function()
+						print(line)
+					end)()
+				end
 				addToOngoingStd(j.pid, line)
 				table.insert(std, line)
 			end
 		end,
 		on_stderr = function(_, line, j)
 			if line then
+				if jsonBuildCommandsSelected.print_ongoing then
+					vim.schedule_wrap(function()
+						print(vim.inspect(line))
+					end)()
+				end
 				addToOngoingStd(j.pid, line)
 				table.insert(std, line)
 			end
@@ -415,16 +426,16 @@ function ShowOngoing()
 						args = { key },
 					}):sync()
 				end)
-				map("i", "q", function()
+				map("n", "q", function()
 					require("telescope.actions").close(c)
 				end)
-				map("i", "o", function()
+				map("n", "o", function()
 					require("telescope.actions").close(c)
 					vim.cmd("stopinsert")
 					vim.cmd("new")
 					local key = keys[currentIndex]
 					vim.api.nvim_buf_set_lines(0, 0, -1, false, test[tonumber(key)].std)
-					vim.bo.modifiable = false
+					vim.bo.modifiable = true
 					vim.bo.buftype = "nofile"
 					vim.bo.bufhidden = "hide"
 					vim.bo.swapfile = false
