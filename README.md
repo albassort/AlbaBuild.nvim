@@ -157,9 +157,9 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 
 # ABExecute
 ## Args
-### Arg 1
+#### Arg 1
 - The first arg for ABExecute is the indice of the command. There is no max amount of commands that can be bound, but it is necessary that the json is in array format.
-### Arg 2 +
+#### Arg 2 +
 - Each argument after the first argument is bound to $ARGV and the corresponding number of arguments from the first additional argument. e.g 
 
 ```json
@@ -195,19 +195,19 @@ There is an obvious issue with executing commands with &, and not logging the PI
 
 - After execution ends, each PID is explicitly removed from memory, and can no longer be seen with ABShowOngoing. But it can be seen with ABView.
 
-## NOTE:
-Because some programs use buffered stdouts and stderrs, sometimes you cannot preview the std err/out after killing a program, or before killing it. There is a
+### NOTE
+Because some programs use buffered stdouts and stderrs, sometimes you cannot preview the std err/out after killing a program, or before killing it. See section below
 
 # Precautions
-## MITM (Man In the Middle)
+### MITM (Man In the Middle)
 Storing arbitrary bash commands, then executing them without checking, a risk of a carries MITM attack. This can be mitigated by setting your `.albabc.json`'s permissions to umask `600`, so only you can read and write to the given file.
-## To Timeout or Not To Timeout
-### To timeout
+### To Timeout or Not To Timeout
+#### To timeout
 Timeout is a Linux command to automatically kill a given command should it live too long. `timeout 50 g++ ...` would kill g++ should it live longer than 50 seconds.
 
 By using this in your .albabc.json e.g `"shell_cmd": "timeout 20 python3 ./example.py"`, you can preemptively kill the command without needing to do use :ABShowOngoing.
 
-### Gotchas
+#### Gotchas
 Some commands, such as python3, buffer the stdout and if they are killed by SIGKILL through timeout, it can inadvertently prevent the flushing out stdout to nvim.
 
 This can be mitigated by using `timeout --signal=SIGINT 20s` where possible. This allows programs with buffered stdout to flush to stdout. 
