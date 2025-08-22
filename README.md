@@ -5,6 +5,15 @@
 # Platform Support
 I am a Linux developer. I am not a Windows, MacOs, (prefix)BSD(suffix) developer. I develop things for Linux. There is **no reason** for this to break on any mainstream distro, consequently, there is no reason for it to work on any non-Linux operating system. **If you wish to make it work on your OS, please make a PR.**
 
+# Lazy
+
+```lua
+{
+    "https://github.com/albassort/AlbaNvimBuild"
+    --SUBJECT TO CHANGE lol
+}
+```
+
 # File placement
 To specify the given build commands you want, you must, of course, have them be on disk. The places I find most convenient is in the git root.
 
@@ -93,6 +102,7 @@ The commands are given in an array. The array can be formatted in two different 
 The latter is less ambiguous; holes are allowed, you don't need to be sequential 1,2,3,4. This can be easier to maintain and clearer to read.
 ### Example
 ```json
+{
   "env_vars": {
     "WALADR": "bcrt1q5ezrg7u0v43g0dvya2m85f8h2ftd9r5839xme7",
     "RPCP": "password1",
@@ -185,12 +195,30 @@ There is an obvious issue with executing commands with &, and not logging the PI
 
 - After execution ends, each PID is explicitly removed from memory, and can no longer be seen with ABShowOngoing. But it can be seen with ABView.
 
+## NOTE:
+Because some programs use buffered stdouts and stderrs, sometimes you cannot preview the std err/out after killing a program, or before killing it. There is a
+
+# Precautions
+## MITM (Man In the Middle)
+Storing arbitrary bash commands, then executing them without checking, a risk of a carries MITM attack. This can be mitigated by setting your `.albabc.json`'s permissions to umask `600`, so only you can read and write to the given file.
+## To Timeout or Not To Timeout
+### To timeout
+Timeout is a Linux command to automatically kill a given command should it live too long. `timeout 50 g++ ...` would kill g++ should it live longer than 50 seconds.
+
+By using this in your .albabc.json e.g `"shell_cmd": "timeout 20 python3 ./example.py"`, you can preemptively kill the command without needing to do use :ABShowOngoing.
+
+### Gotchas
+Some commands, such as python3, buffer the stdout and if they are killed by SIGKILL through timeout, it can inadvertently prevent the flushing out stdout to nvim.
+
+This can be mitigated by using `timeout --signal=SIGINT 20s` where possible. This allows programs with buffered stdout to flush to stdout. 
+
+#### Python Specific
+adding `-u` to python3 allows it to run in unbuffered mode, for which, this ceases to be an issue. E.g `"shell_cmd": "timeout 2 python3 -u ./example.py"`
 
 # Testing 
 Unfortunately, testing broken, and I'm unsure how to get it to work. Plenary jobs simply do not work as intended currently within its testing environment. Some jobs started, will ONLY exit once the program has exited, no matter what I do. Testing is currently manual.
 
 Perhaps a more builtin nvim way could be implemented to automate it. Further investigation would need to be done.
 
-# Donate
-If you like this plugin and wish to support me, I have a donate page at https://donate.albassort.com where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.
-
+##### Donate
+*If you like this plugin and wish to support me, I have a donate page at https://donate.albassort.com where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.*
