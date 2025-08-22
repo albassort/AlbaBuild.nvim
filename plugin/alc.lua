@@ -2,6 +2,15 @@ local alb = {}
 
 vim.keymap.set("n", "gw", vim.diagnostic.open_float, { desc = "Show diagnostics under cursor" })
 
+table.listContains = function(list, findMe)
+	for _, v in ipairs(list) do
+		if v == findMe then
+			return true
+		end
+	end
+	return false
+end
+
 string.gfind = function(str, pattern)
 	local from_idx = nil
 	local to_idx = 0
@@ -127,12 +136,13 @@ alb.RunCommand = function(ops, output, useSync)
 		oil = split[1] == "oil"
 		root = split[2]
 	end
-	if oil == false then
+	if not oil then
 		local p = Path:new(path)
 		dir = p:parent():absolute()
 	else
 		dir = root
 	end
+
 	local targetCommands = nil
 	local immediate = Path:new(dir):joinpath(fileName)
 
@@ -200,6 +210,21 @@ alb.RunCommand = function(ops, output, useSync)
 		return
 	end
 
+	if jsonBuildCommandsSelected.autoopen_whitelist and jsonBuildCommandsSelected.autoopen_blacklist then
+		print("You must pick either autoopen_whitelist or autoopen_blacklist.")
+		return
+	end
+
+	local mode = "off"
+	local list = {}
+	if jsonBuildCommandsSelected.autoopen_whitelist then
+		list = jsonBuildCommandsSelected.autoopen_whitelist
+		mode = "white"
+	elseif jsonBuildCommandsSelected.autoopen_blacklist then
+		list = jsonBuildCommandsSelected.autoopen_blacklist
+		mode = "black"
+	end
+
 	local entries = {}
 	for i, value in ipairs(jsonBuildCommands) do
 		table.insert(entries, value.name)
@@ -245,9 +270,18 @@ alb.RunCommand = function(ops, output, useSync)
 			vim.defer_fn(function()
 				vim.notify("Your job: " .. jsonBuildCommandsSelected.name .. ", has exited: " .. returny)
 
-				if jsonBuildCommandsSelected.print_result == true then
+				if not jsonBuildCommandsSelected.print_result and mode ~= "off" then
+					local contains = table.listContains(list, return_val)
+					local showPopup = (mode == "white" and contains) or (mode == "black" and not contains)
+					if showPopup then
+						open_popup(std, time, jsonBuildCommandsSelected.name, return_val)
+					end
 				end
-				if jsonBuildCommandsSelected.autoopen == true then
+
+				if jsonBuildCommandsSelected.print_result then
+					print(std)
+				end
+				if jsonBuildCommandsSelected.autoopen then
 					open_popup(std, time, jsonBuildCommandsSelected.name, return_val)
 				end
 			end, 20)

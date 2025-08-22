@@ -32,10 +32,10 @@ In all cases `git rev-parse --show-toplevel` is executed to determine the root o
 EnvVars can be specified in an "env_vars" block on the root of the build commands. But, specifying env_vars is **not required**.
 ```json
 {
-    env_vars: 
-        {
-            "Key1": "hello World"
-        }
+  "env_vars": 
+    {
+      "Key1": "hello World"
+    }
 }
 
 ```

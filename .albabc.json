@@ -30,6 +30,38 @@
       "cwd": ".",
       "autoopen": true,
       "print_result": false
+    },
+    "5": {
+      "name": "Blacklist test (show popup)",
+      "shell_cmd": "echo my test; exit 1",
+      "cwd": ".",
+      "autoopen_blacklist": [
+        0
+      ]
+    },
+    "6": {
+      "name": "Blacklist test (dont show popup)",
+      "shell_cmd": "echo my test; exit 1",
+      "cwd": ".",
+      "autoopen_blacklist": [
+        1
+      ]
+    },
+    "7": {
+      "name": "Whitelist test (show popup)",
+      "shell_cmd": "echo my test; exit 1",
+      "cwd": ".",
+      "autoopen_whitelist": [
+        1
+      ]
+    },
+    "8": {
+      "name": "Whitelist test (dont show popup)",
+      "shell_cmd": "echo my test; exit 0",
+      "cwd": ".",
+      "autoopen_whitelist": [
+        1
+      ]
     }
   }
 }
