@@ -5,7 +5,7 @@
   "build_commands": {
     "1": {
       "name": "Hello, World!",
-      "shell_cmd": "echo 'Hello, World!' ",
+      "shell_cmd": "echo 'Hello, World!2'",
       "cwd": ".",
       "autoopen": true,
       "print_result": false
@@ -62,6 +62,19 @@
       "autoopen_whitelist": [
         1
       ]
+    },
+    "9": {
+      "name": "Mandatory args test",
+      "shell_cmd": "echo $ARG1; exit 0",
+      "cwd": ".",
+      "prompt": "This guy wants some extra commands!",
+      "min_args": 2,
+      "autoopen": true
+    },
+    "named_test": {
+      "name": "This is a named guy",
+      "shell_cmd": "echo my test; exit 0",
+      "cwd": "."
     }
   }
 }

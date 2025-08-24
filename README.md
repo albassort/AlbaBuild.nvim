@@ -2,8 +2,16 @@
 - Telescope
 - Plenary
 
+# What is AlbaBuild.nvim
+
 # Platform Support
-I am a Linux developer. I am not a Windows, MacOs, (prefix)BSD(suffix) developer. I develop things for Linux. There is **no reason** for this to break on any mainstream distro, consequently, there is no reason for it to work on any non-Linux operating system. **If you wish to make it work on your OS, please make a PR.**
+
+AlbaBuild.nvim has been tested on
+```
+NVIM v0.11.3
+LuaJIT 2.1.1741730670
+```
+As a linux developer, I am unable to support other platforms. It is **highly unlikely MacOs, or Windows works.**. Any pull request for this is welcome
 
 # Lazy
 
@@ -63,6 +71,8 @@ When the command is executed, it merges the env_vars with the default system env
 - "autoopen_whitelist" (array[int]): If the return code is equal to any of these values, perform autoopen. This is incompatible with autoopen_blacklist
 - "autoopen_blacklist" (array[int]): If the return code not is equal to any of these values, perform autoopen. This is incompatible with autoopen_whitelist
 - "print_ongoing" (bool): If  you wish to be notified as a program is ongoing, of the std and stderr outputs, this will print them in the status line.
+- "min_args" (int): If your given command requires parameters, you can mandate that they are given. If there are less arguments given than min_args, it will prompt you again to re-enter the command.
+- "prompt": (string) This will be shown when the arguments given is less than min_args
 
 ### Format
 The commands are given in an array. The array can be formatted in two different ways as per the json spec
@@ -126,8 +136,10 @@ The latter is less ambiguous; holes are allowed, you don't need to be sequential
       "cwd": "./src/",
       "autoopen": false,
       "print_result": true
-    },
+    }
+  ]
 }
+
 ```
 This allows for an easily configurable, portable unix focused testing apparatus. Developers can replace the envvars and build commands become usable to them.
 

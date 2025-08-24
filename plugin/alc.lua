@@ -32,10 +32,6 @@ string.split = function(str, pattern)
 	return result
 end
 
-local str = "oil:///my/path/"
-local pattern = "://"
---print(vim.inspect(string.split(str, pattern)))
-
 _G.ABLogs = _G.ABLogs or {}
 function _G.addToABLogs(key, val)
 	_G.ABLogs[key] = val
@@ -50,10 +46,31 @@ end
 
 _G.OngoingPid = _G.OngoingPid or {}
 function _G.addNewOnGoing(pid, commandName, timeStarted)
-	_G.OngoingPid[pid] = { std = {}, commandName = commandName, timeStarted = timeStarted }
+	_G.OngoingPid[pid] = { std = {}, commandName = commandName, timeStarted = timeStarted, bufs = {} }
 end
 function _G.addToOngoingStd(pid, line)
 	table.insert(_G.OngoingPid[pid].std, line)
+
+	for i, buf in ipairs(_G.OngoingPid[pid].bufs) do
+		if buf ~= nil then
+			local success, _ = pcall(function()
+				vim.schedule(function()
+					vim.api.nvim_buf_set_lines(buf, 0, -1, false, _G.OngoingPid[pid].std)
+				end)
+			end)
+			if not success then
+				print("ded lol")
+				_G.OngoingPid[pid].bufs[i] = nil
+			end
+		end
+	end
+end
+
+function _G.addStdWindowListener(pid, buf_number)
+	table.insert(_G.OngoingPid[pid].bufs, buf_number)
+end
+function _G.removeStdWIndowListener(pid, buf_number)
+	_G.OngoingPid[pid].bufs[buf_number] = nil
 end
 function _G.removeOngoig(pid)
 	_G.OngoingPid[pid] = nil
@@ -115,7 +132,7 @@ alb.RunCommand = function(ops, output, useSync)
 	output = output or nil -- explicitly set default
 	local index
 	if output == nil then
-		index = tonumber(ops.fargs[1])
+		index = ops.fargs[1]
 	else
 		index = ops
 	end
@@ -164,7 +181,6 @@ alb.RunCommand = function(ops, output, useSync)
 			print("buff is not in a git!")
 			return
 		end
-		print("HERE!")
 
 		targetCommands = Path:new(topMostGit):joinpath(fileName)
 	end
@@ -175,7 +191,6 @@ alb.RunCommand = function(ops, output, useSync)
 
 	local success, jsonResult = pcall(function()
 		local buildData = targetCommands:read()
-		--  print(buildData)
 		return vim.fn.json_decode(buildData)
 	end)
 
@@ -187,9 +202,14 @@ alb.RunCommand = function(ops, output, useSync)
 	local jsonBuildCommands = jsonResult.build_commands
 	local env_vars = jsonResult.env_vars or {}
 	env_vars["BUF"] = vim.api.nvim_buf_get_name(0)
+	-- When output is nil its being used in a debugging context
+	-- Otherwise its being executed from nvim's commands
+	local nArgs = 0
 	if output == nil then
 		for i, a in ipairs(ops.fargs) do
 			if i ~= 1 then
+				nArgs = nArgs + 1
+				-- The first arg in fargs is key of the command
 				env_vars["ARG" .. tostring(i - 1)] = a
 			end
 		end
@@ -197,7 +217,9 @@ alb.RunCommand = function(ops, output, useSync)
 
 	-- print(vim.inspect(env_vars))
 	-- print(vim.inspect(ops.fargs))
-	local jsonBuildCommandsSelected = jsonBuildCommands[index] or jsonBuildCommands[tostring(index)]
+	-- print(vim.inspect(index))
+	-- print(vim.inspect(ops))
+	local jsonBuildCommandsSelected = jsonBuildCommands[index] or jsonBuildCommands[tonumber(index)]
 	if jsonBuildCommandsSelected == nil then
 		print("Index out of bounds; the json is supposed to be array of objects")
 		return
@@ -208,6 +230,15 @@ alb.RunCommand = function(ops, output, useSync)
 		or jsonBuildCommandsSelected.name == nil
 	then
 		print("name, shell_cmd, and, cwd are all required fields, but one of them was not found.")
+		return
+	end
+
+	local mandatoryArgs = jsonBuildCommandsSelected.min_args or nil
+
+	if mandatoryArgs ~= nil and mandatoryArgs > nArgs then
+		print("Less args provided than the minimum: " .. tostring(mandatoryArgs))
+		print(jsonBuildCommandsSelected.prompt)
+		vim.api.nvim_feedkeys(":ABExecute " .. index .. " ", "n", false)
 		return
 	end
 
@@ -290,7 +321,7 @@ alb.RunCommand = function(ops, output, useSync)
 				end
 
 				if jsonBuildCommandsSelected.print_result then
-					print(std)
+					print(vim.inspect(std))
 				end
 				if jsonBuildCommandsSelected.autoopen then
 					open_popup(std, time, jsonBuildCommandsSelected.name, return_val)
@@ -425,6 +456,7 @@ function ShowOngoing()
 						command = "kill",
 						args = { key },
 					}):sync()
+					require("telescope.actions").close(c)
 				end)
 				map("n", "q", function()
 					require("telescope.actions").close(c)
@@ -433,8 +465,10 @@ function ShowOngoing()
 					require("telescope.actions").close(c)
 					vim.cmd("stopinsert")
 					vim.cmd("new")
+					local buf = vim.api.nvim_get_current_buf()
 					local key = keys[currentIndex]
-					vim.api.nvim_buf_set_lines(0, 0, -1, false, test[tonumber(key)].std)
+					_G.addStdWindowListener(tonumber(key), buf)
+					vim.api.nvim_buf_set_lines(buf, 0, -1, false, test[tonumber(key)].std)
 					vim.bo.modifiable = true
 					vim.bo.buftype = "nofile"
 					vim.bo.bufhidden = "hide"
