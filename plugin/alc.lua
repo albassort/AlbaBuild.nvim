@@ -81,7 +81,7 @@ end
 
 alb.getOngoing = _G.getOngoing
 
-local function open_popup(buff, time, name, result_val)
+local function openPopup(buff, time, name, result_val)
 	local buf = vim.api.nvim_create_buf(false, true)
 	local time_str = os.date("%Y-%m-%d %H:%M:%S", time) .. " (" .. tostring(os.time() - time) .. " seconds ago)"
 	local buffCopy = {}
@@ -221,7 +221,7 @@ alb.RunCommand = function(ops, output, useSync)
 	-- print(vim.inspect(ops))
 	local jsonBuildCommandsSelected = jsonBuildCommands[index] or jsonBuildCommands[tonumber(index)]
 	if jsonBuildCommandsSelected == nil then
-		print("Index out of bounds; the json is supposed to be array of objects")
+		print("The command provided was not found in the .albabc.json. Please check its formatting.")
 		return
 	end
 	if
@@ -316,7 +316,7 @@ alb.RunCommand = function(ops, output, useSync)
 					local contains = table.listContains(list, return_val)
 					local showPopup = (mode == "white" and contains) or (mode == "black" and not contains)
 					if showPopup then
-						open_popup(std, time, jsonBuildCommandsSelected.name, return_val)
+						openPopup(std, time, jsonBuildCommandsSelected.name, return_val)
 					end
 				end
 
@@ -324,7 +324,7 @@ alb.RunCommand = function(ops, output, useSync)
 					print(vim.inspect(std))
 				end
 				if jsonBuildCommandsSelected.autoopen then
-					open_popup(std, time, jsonBuildCommandsSelected.name, return_val)
+					openPopup(std, time, jsonBuildCommandsSelected.name, return_val)
 				end
 			end, 20)
 			removeOngoig(j.pid)
@@ -394,6 +394,7 @@ function ShowResults()
 			attach_mappings = function(c, map)
 				map("i", "<enter>", function()
 					vim.cmd("stopinsert")
+					-- TOOD: standardize, not call new and nvim_create_buf in different places.
 					vim.cmd("new")
 					local key = keys[currentIndex]
 					vim.api.nvim_buf_set_lines(0, 0, -1, false, test[key].buff)
@@ -464,6 +465,7 @@ function ShowOngoing()
 				map("n", "o", function()
 					require("telescope.actions").close(c)
 					vim.cmd("stopinsert")
+					-- TOOD: standardize, not call new and nvim_create_buf in different places.
 					vim.cmd("new")
 					local buf = vim.api.nvim_get_current_buf()
 					local key = keys[currentIndex]

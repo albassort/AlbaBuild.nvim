@@ -3,6 +3,19 @@
 - Plenary
 
 # What is AlbaBuild.nvim
+AlbaBuild.Nvim is a simple way to package hotkey-bound build commands, or general purpose development commands to nvim. In a way, which is portable between repositories. 
+
+### Features
+- Json configuration
+- Stores logs for all programs, accessible from nvim.
+- Keep track of ongoing commands, and kill them when needed.`
+- Provide arguments for each command, from your nvim command line.
+- Show the std+stderr output in a popup window after exiting.
+- Blacklist or whitelist this popup via exitcode (e.g only popup when the program fails, or if timeout (140) is called).
+- Print ongoing std/stderr out to your nvim-status line .
+- Portable, other developers can pickup where you left off and reuse commonly used bash commands.
+- Specify env_vars in a dedicated section for re-use throughout. Very useful for developers, makes configuring the commands for the given environment simple.
+- Makes you the coolest (or least cool?) person working on a given project, or your (no) money back!
 
 # Platform Support
 
@@ -11,14 +24,15 @@ AlbaBuild.nvim has been tested on
 NVIM v0.11.3
 LuaJIT 2.1.1741730670
 ```
-As a linux developer, I am unable to support other platforms. It is **highly unlikely MacOs, or Windows works.**. Any pull request for this is welcome
+As a linux developer, it is difficult to test and support other platforms. As such, it is currently only designed to work on Linux. Contributions are welcome to support multiple platforms
 
 # Lazy
 
+This works for the lazy.nvim package manager.
 ```lua
 {
-    "https://github.com/albassort/AlbaNvimBuild"
-    --SUBJECT TO CHANGE lol
+    "https://github.com/albassort/AlbaBuild.nvim",
+    dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim"},
 }
 ```
 
@@ -63,7 +77,7 @@ When the command is executed, it merges the env_vars with the default system env
 ## build_commands
 ### Mandatory values
 - "name": The name of the variable. Should be unique for your convenience but this is not required, it shouldn't cause any issues.
-- "shell_cmd": The command you want to execute, it would be weird if you didn't have this, no?
+- "shell_cmd": The command you want to execute
 - "cwd": The directory you wish to execute the shell_cmd in. If you don't wish to use this, please set it to "." which will use the directory that plenary uses by default
 ### Optional values
 - "autoopen" (bool): Automatically opens the command output 
@@ -89,29 +103,38 @@ The commands are given in an array. The array can be formatted in two different 
         ]
 }
 ```
+
+This binds hello world to 1, `<leader> xb1`. 
+
 ```json
 {
-    "build_commands": 
-        {
-        
-            "1" : 
-                {
-                  "name": "Hello, World!",
-                  "shell_cmd": "echo 'Hello, World!'",
-                  "cwd": ".",
-                }
-            "4" : 
-                {
-                  "name": "I forgot who I was ",
-                  "shell_cmd": "whoami",
-                  "cwd": ".",
-                  "autoopen": true
-                }
-
-        }
+  "build_commands": {
+    "1": {
+      "name": "Hello, World!",
+      "shell_cmd": "echo 'Hello, World!'",
+      "cwd": "."
+    },
+    "4": {
+      "name": "I forgot who I was ",
+      "shell_cmd": "whoami",
+      "cwd": ".",
+      "autoopen": true
+    },
+    "named": {
+      "name": "I am named! I also take args, and open if they do not equal 'Hello'!",
+      "shell_cmd": "if [ \"$ARG1\" != 'Hello' ]; then echo '$ARG1'; exit 1; fi",
+      "cwd": ".",
+      "min_args": 1,
+      "autoopen_whitelist": [
+        1
+      ]
+    }
+  }
 }
 ```
-The latter is less ambiguous; holes are allowed, you don't need to be sequential 1,2,3,4. This can be easier to maintain and clearer to read.
+
+This also allows for each of the objects to be bound to xb1-9, as, it matches by string. It also allows names, easily executable through `<leader>xb0`. Numbers are arbitrary, and do not require order.
+
 ### Example
 ```json
 {
@@ -169,7 +192,7 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 
 ```
 
-# ABExecute
+# :ABExecute
 ## Args
 #### Arg 1
 - The first arg for ABExecute is the indice of the command. There is no max amount of commands that can be bound, but it is necessary that the json is in array format.
@@ -189,14 +212,14 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 ```
 - When executed with `ABExecute 1 Cats Cows` you get `I like Cats and I also like Cows`
 
-# ABView
+# :ABView
 ABView opens a telescope with all commands executed, from oldest to newest. Hitting enter will open, in a new buffer
 
 - After a task is started, its stdout and stderr is saved in `_G.ABLogs`.
 
 - This is not persistent between startups, and is saved in memory. 
 
-# ABShowOngoing
+# :ABShowOngoing
 There is an obvious issue with executing commands with &, and not logging the PID. For a lot of shell commands, you need to kill them, eventually. Hence ABShowOngoing.
 
 - After a task is started with ABExecute it is added to `_G.OngoingPid`, and, as new lines come from stdout and stderr, it is added to the given PID's `std` value
@@ -229,10 +252,10 @@ This can be mitigated by using `timeout --signal=SIGINT 20s` where possible. Thi
 #### Python Specific
 adding `-u` to python3 allows it to run in unbuffered mode, for which, this ceases to be an issue. E.g `"shell_cmd": "timeout 2 python3 -u ./example.py"`
 
-# Testing 
-Unfortunately, testing broken, and I'm unsure how to get it to work. Plenary jobs simply do not work as intended currently within its testing environment. Some jobs started, will ONLY exit once the program has exited, no matter what I do. Testing is currently manual.
+# TODO 
+- Implement standard testing (plenary testing breaks shell commands for some reason)
 
-Perhaps a more builtin nvim way could be implemented to automate it. Further investigation would need to be done.
+##### Support
+*If you like the project, and wish to show your support, you can go to [page](https://donate.albassort.com) where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.*
+ 
 
-##### Donate
-*If you like this plugin and wish to support me, I have a donate page at https://donate.albassort.com where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.*

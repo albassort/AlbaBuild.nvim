@@ -19,7 +19,7 @@
     },
     "3": {
       "name": "env_var test",
-      "shell_cmd": "echo $Meow",
+      "shell_cmd": "if [ \"$Meow\" != 'ニャア' ]; then echo 'EnvVars are broken!'; exit 1; fi",
       "cwd": ".",
       "autoopen": true,
       "print_result": false
@@ -75,6 +75,15 @@
       "name": "This is a named guy",
       "shell_cmd": "echo my test; exit 0",
       "cwd": "."
+    },
+    "named_test2": {
+      "name": "Hello I am named. I also take args, and open if they are wrong!",
+      "shell_cmd": "if [ \"$ARG1\" != 'Hello' ]; then echo '$ARG1'; exit 1; fi",
+      "cwd": ".",
+      "min_args": 1,
+      "autoopen_whitelist": [
+        1
+      ]
     }
   }
 }
