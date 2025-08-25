@@ -1,4 +1,4 @@
-# What is AlbaBuild.nvim
+## What is AlbaBuild.nvim
 AlbaBuild.nvim is a simple, git portable, json configured, hotkey-driven, build system for nvim
 
 AlbaBuild.nvim is a simple nvim plugin, to allow build commands to be hotkey-bound and embedded in git repositories. This enables you to simplify your work flow, remove repetitive terminal usage, and get new contributors in sync with established contributors easier.
@@ -24,33 +24,42 @@ I have, for years, only ever programmed with a terminal open, somewhere. Be it o
 - Specify env_vars in a dedicated section for re-use throughout. Very useful for developers, makes configuring the commands for the given environment simple.
 - Makes you the coolest (or least cool?) person working on a given project, or your (no) money back!
 
-# Dependencies
-Only two dependencies, none are optional.
-- Telescope 
-    - Used for choice popups, in ABView and ABShowOngoing.
-- Plenary
-    - General helper library, used for executing shell commands and a bunch of small things
 
-# Platform Support
+## Lazy
+
+This works for the lazy.nvim package manager.
+```lua
+{
+    "https://github.com/albassort/AlbaBuild.nvim",
+    -- Mandatory
+    dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim"},
+}
+```
+
+### Quickstart
+```json
+{
+  "build_commands": [
+    {
+      "name": "Generate ctags for the given directory",
+      "shell_cmd": "ctags -R .",
+      "cwd": "."
+    }
+  ]
+}
+```
+To execute, make sure this is saved to a .albabc.json in a git. Then execute `ABExecute 1`. **there is recommended keybidnds in a later section**.
+
+## Platform Support
 
 AlbaBuild.nvim has been tested on
 ```
 NVIM v0.11.3
 LuaJIT 2.1.1741730670
 ```
-As a linux developer, it is difficult to test and support other platforms. As such, it is currently only designed to work on Linux. Contributions are welcome to support multiple platforms
+As a Linux developer, it is difficult to test and support other platforms. As such, it is currently only designed to work on Linux. Contributions are welcome to support multiple platforms
 
-# Lazy
-
-This works for the lazy.nvim package manager.
-```lua
-{
-    "https://github.com/albassort/AlbaBuild.nvim",
-    dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim"},
-}
-```
-
-# File placement
+## File placement
 To specify the given build commands you want, you must, of course, have them be on disk. The places I find most convenient is in the git root.
 
 `.albabc.json` is the name used for the files in which build commands are stored. And, you cannot use build commands without a git repo. But this can be limiting, so each directory can also have their own .albabc.json, separate. The decision for which to use is based on **the current buffer file path**, if this can't be found, it used the pwd vim pwd (configurable with cd).  For example:
@@ -69,11 +78,12 @@ To specify the given build commands you want, you must, of course, have them be 
 ```
 1. While you are editing my_stuff.py, it will use the root .albabc.json, next to your .git.
 2. But if you are editing bash_to_test.sh, it will use the .albabc.json in its own folder, with its own keybinds.
-3. You may think dont_modify_me.c would use the .albabc specified in the folder above. No, it would not. It would use the .git configuration, as it lacks one.
+3. You may think dont_modify_me.c would use the .albabc specified in the folder above. No, it would not. It would use the .git configuration, as it lacks one locally in its directory.
 
-In all cases `git rev-parse --show-toplevel` is executed to determine the root of the directory, and thus, the primary .albabc to be used.
-# Json Format
-## EnvVars 
+In all cases `git rev-parse --show-toplevel` is executed to determine the root of the directory, and thus, the primary .albabc to be used. This is only overridden by a `.albabc.json` being in the same directory as the given buffer.
+
+## Json Format
+### EnvVars 
 EnvVars can be specified in an "env_vars" block on the root of the build commands. But, specifying env_vars is **not required**.
 ```json
 {
@@ -88,12 +98,12 @@ Each key is assigned to the env with the corresponding value. It can then be use
 
 When the command is executed, it merges the env_vars with the default system env_vars in your bash configuration, as used by sh -c. That is to say, your normal $PATH is used. Specifically the `vim.fn.environ()` function is used. These can be overridden by you, by specifying them in the env_vars section.
 
-## build_commands
-### Mandatory values
+### build_commands
+#### Mandatory values
 - "name": The name of the variable. Should be unique for your convenience but this is not required, it shouldn't cause any issues.
 - "shell_cmd": The command you want to execute
 - "cwd": The directory you wish to execute the shell_cmd in. If you don't wish to use this, please set it to "." which will use the directory that plenary uses by default
-### Optional values
+#### Optional values
 - "autoopen" (bool): Automatically opens the command output 
 - "print_result" (bool): prints the result using nvim print(), lighter than auto open, same principle 
 - "autoopen_whitelist" (array[int]): If the return code is equal to any of these values, perform autoopen. This is incompatible with autoopen_blacklist
@@ -103,7 +113,7 @@ When the command is executed, it merges the env_vars with the default system env
 - "min_args" (int): If your given command requires parameters, you can mandate that they are given. If there are less arguments given than min_args, it will prompt you again to re-enter the command.
 - "prompt": (string) This will be shown when the arguments given is less than min_args
 
-### Format
+#### Format
 The commands are given in an array. The array can be formatted in two different ways as per the json spec
 ```json
 {
@@ -150,7 +160,7 @@ This binds hello world to 1, `<leader> xb1`.
 
 This also allows for each of the objects to be bound to xb1-9, as, it matches by string. It also allows names, easily executable through `<leader>xb0`. Numbers are arbitrary, and do not require order.
 
-### Example
+#### Example
 ```json
 {
   "env_vars": {
@@ -207,8 +217,8 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 
 ```
 
-# :ABExecute
-## Args
+## :ABExecute
+### Args
 #### Arg 1
 - The first arg for ABExecute is the indice of the command. There is no max amount of commands that can be bound, but it is necessary that the json is in array format.
 #### Arg 2 +
@@ -227,14 +237,14 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 ```
 - When executed with `ABExecute 1 Cats Cows` you get `I like Cats and I also like Cows`
 
-# :ABView
+## :ABView
 ABView opens a telescope with all commands executed, from oldest to newest. Hitting enter will open, in a new buffer
 
 - After a task is started, its stdout and stderr is saved in `_G.ABLogs`.
 
 - This is not persistent between startups, and is saved in memory. 
 
-# :ABShowOngoing
+## :ABShowOngoing
 There is an obvious issue with executing commands with &, and not logging the PID. For a lot of shell commands, you need to kill them, eventually. Hence ABShowOngoing.
 
 - After a task is started with ABExecute it is added to `_G.OngoingPid`, and, as new lines come from stdout and stderr, it is added to the given PID's `std` value
@@ -250,7 +260,7 @@ There is an obvious issue with executing commands with &, and not logging the PI
 ### NOTE
 Because some programs use buffered stdouts and stderrs, sometimes you cannot preview the std err/out after killing a program, or before killing it. See section below
 
-# Precautions
+## Precautions
 ### MITM (Man In the Middle)
 Storing arbitrary bash commands, then executing them without checking, a risk of a carries MITM attack. This can be mitigated by setting your `.albabc.json`'s permissions to umask `600`, so only you can read and write to the given file.
 ### To Timeout or Not To Timeout
@@ -272,5 +282,3 @@ adding `-u` to python3 allows it to run in unbuffered mode, for which, this ceas
 
 ##### Support
 *If you like the project, and wish to show your support, you can go to [page](https://donate.albassort.com) where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.*
- 
-
