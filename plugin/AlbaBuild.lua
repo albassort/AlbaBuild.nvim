@@ -344,6 +344,12 @@ alb.RunCommand = function(ops, output, useSync)
 	vim.notify("Your job: " .. jsonBuildCommandsSelected.name .. ", has started ")
 
 	addNewOnGoing(j.pid, jsonBuildCommandsSelected.name, time)
+
+	if jsonBuildCommandsSelected.open_ongoing then
+		vim.cmd("new")
+		local buf = vim.api.nvim_get_current_buf()
+		_G.addStdWindowListener(j.pid, buf)
+	end
 end
 
 function ShowResults()

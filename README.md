@@ -1,9 +1,16 @@
-# Dependencies
-- Telescope
-- Plenary
-
 # What is AlbaBuild.nvim
-AlbaBuild.Nvim is a simple way to package hotkey-bound build commands, or general purpose development commands to nvim. In a way, which is portable between repositories. 
+AlbaBuild.nvim is a simple, git portable, json configured, hotkey-driven, build system for nvim
+
+AlbaBuild.nvim is a simple nvim plugin, to allow build commands to be hotkey-bound and embedded in git repositories. This enables you to simplify your work flow, remove repetitive terminal usage, and get new contributors in sync with established contributors easier.
+
+It is 
+- Primarily git based, your git repo determines the commands.
+- Easy to setup 
+- Portable
+
+### Why?
+
+I have, for years, only ever programmed with a terminal open, somewhere. Be it on a different monitors, different tab, using :term, using screen or tmux, etc. And, usually its with predefined commands. I will often loose, or forget about one, and have to rewrite it if its not saved in a .sh. And, critically, if I were to leave and comeback to a given repository over years, I would need to relearn the commands, and what they do. This is my solution to streamline this process.
 
 ### Features
 - Json configuration
@@ -16,6 +23,13 @@ AlbaBuild.Nvim is a simple way to package hotkey-bound build commands, or genera
 - Portable, other developers can pickup where you left off and reuse commonly used bash commands.
 - Specify env_vars in a dedicated section for re-use throughout. Very useful for developers, makes configuring the commands for the given environment simple.
 - Makes you the coolest (or least cool?) person working on a given project, or your (no) money back!
+
+# Dependencies
+Only two dependencies, none are optional.
+- Telescope 
+    - Used for choice popups, in ABView and ABShowOngoing.
+- Plenary
+    - General helper library, used for executing shell commands and a bunch of small things
 
 # Platform Support
 
@@ -84,7 +98,8 @@ When the command is executed, it merges the env_vars with the default system env
 - "print_result" (bool): prints the result using nvim print(), lighter than auto open, same principle 
 - "autoopen_whitelist" (array[int]): If the return code is equal to any of these values, perform autoopen. This is incompatible with autoopen_blacklist
 - "autoopen_blacklist" (array[int]): If the return code not is equal to any of these values, perform autoopen. This is incompatible with autoopen_whitelist
-- "print_ongoing" (bool): If  you wish to be notified as a program is ongoing, of the std and stderr outputs, this will print them in the status line.
+- "print_ongoing" (bool): If you wish to be notified as a program is ongoing, of the std and stderr outputs, this will print them in the status line.
+- "autoopen_ongoing" (bool): Automatically opens the STDOUT+STDERR in a new vim buffer. This can be done otherwise with ABShowOngoing and hitting "o".
 - "min_args" (int): If your given command requires parameters, you can mandate that they are given. If there are less arguments given than min_args, it will prompt you again to re-enter the command.
 - "prompt": (string) This will be shown when the arguments given is less than min_args
 
