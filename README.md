@@ -8,10 +8,6 @@ It is
 - Easy to setup 
 - Portable
 
-### Why?
-
-I have, for years, only ever programmed with a terminal open, somewhere. Be it on a different monitors, different tab, using :term, using screen or tmux, etc. And, usually its with predefined commands. I will often loose, or forget about one, and have to rewrite it if its not saved in a .sh. And, critically, if I were to leave and comeback to a given repository over years, I would need to relearn the commands, and what they do. This is my solution to streamline this process.
-
 ### Features
 - Json configuration
 - Stores logs for all programs, accessible from nvim.
@@ -24,6 +20,9 @@ I have, for years, only ever programmed with a terminal open, somewhere. Be it o
 - Specify env_vars in a dedicated section for re-use throughout. Very useful for developers, makes configuring the commands for the given environment simple.
 - Makes you the coolest (or least cool?) person working on a given project, or your (no) money back!
 
+### Why?
+
+I have, for years, only ever programmed with a terminal open, somewhere. Be it on a different monitors, different tab, using :term, using screen or tmux, etc. And, usually its with predefined commands. I will often loose, or forget about one, and have to rewrite it if its not saved in a .sh. And, critically, if I were to leave and comeback to a given repository over years, I would need to relearn the commands, and what they do. This is my solution to streamline this process.
 
 ## Lazy
 
