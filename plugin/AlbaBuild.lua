@@ -192,8 +192,10 @@ alb.RunCommand = function(ops, output, useSync)
 			return
 		end
 
-		targetCommands = Path:new(topMostGit):joinpath(fileName)
+		-- If we're in a git repo, we let you use a local .albabc.json for a given directory chain
+		targetCommands = Path:new(dir):find_upwards(fileName) or Path:new(topMostGit):joinpath(fileName)
 	end
+
 	if targetCommands:exists() == false then
 		print(".albabc.json does not exist in " .. targetCommands:absolute() .. " from path " .. path)
 		return
@@ -272,7 +274,8 @@ alb.RunCommand = function(ops, output, useSync)
 		table.insert(entries, value.name)
 	end
 
-	local relapth = Path:new(dir):joinpath(jsonBuildCommandsSelected.cwd)
+	print(targetCommands)
+	local relapth = targetCommands:parent():joinpath(jsonBuildCommandsSelected.cwd)
 	if relapth:exists() == false then
 		print("The cwd provided does not exist!")
 		return

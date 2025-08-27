@@ -4,14 +4,15 @@ AlbaBuild.nvim is a simple, git portable, json configured, hotkey-driven, build 
 AlbaBuild.nvim is a simple nvim plugin, to allow build commands to be hotkey-bound and embedded in git repositories. This enables you to simplify your work flow, remove repetitive terminal usage, and get new contributors in sync with established contributors easier.
 
 It is 
-- Primarily git based, your git repo determines the commands.
-- Easy to setup 
+- Git Based
+- Json configurable
 - Portable
+- Convenient
 
 ### Features
 - Json configuration
 - Stores logs for all programs, accessible from nvim.
-- Keep track of ongoing commands, and kill them when needed.`
+- Keep track of ongoing commands, and kill them when needed.
 - Provide arguments for each command, from your nvim command line.
 - Show the std+stderr output in a popup window after exiting.
 - Blacklist or whitelist this popup via exitcode (e.g only popup when the program fails, or if timeout (140) is called).
@@ -77,9 +78,9 @@ To specify the given build commands you want, you must, of course, have them be 
 ```
 1. While you are editing my_stuff.py, it will use the root .albabc.json, next to your .git.
 2. But if you are editing bash_to_test.sh, it will use the .albabc.json in its own folder, with its own keybinds.
-3. You may think dont_modify_me.c would use the .albabc specified in the folder above. No, it would not. It would use the .git configuration, as it lacks one locally in its directory.
+3. This .albabc.json, in the special_stuff folder, will also apply to the dont_modify_me.c. As, it overrides the git's global .albabc.json
 
-In all cases `git rev-parse --show-toplevel` is executed to determine the root of the directory, and thus, the primary .albabc to be used. This is only overridden by a `.albabc.json` being in the same directory as the given buffer.
+In all cases `git rev-parse --show-toplevel` is executed to determine the root of the directory, and thus, the primary .albabc to be used. This is overriden by a parent directory having a separate .albabc.json
 
 ## Json Format
 ### EnvVars 
@@ -104,7 +105,7 @@ When the command is executed, it merges the env_vars with the default system env
 - "cwd": The directory you wish to execute the shell_cmd in. If you don't wish to use this, please set it to "." which will use the directory that plenary uses by default
 #### Optional values
 - "autoopen" (bool): Automatically opens the command output 
-- "print_result" (bool): prints the result using nvim print(), lighter than auto open, same principle 
+- "print_result" (bool): prints the result using nvim's builtin print(), lighter than auto open, same principle 
 - "autoopen_whitelist" (array[int]): If the return code is equal to any of these values, perform autoopen. This is incompatible with autoopen_blacklist
 - "autoopen_blacklist" (array[int]): If the return code not is equal to any of these values, perform autoopen. This is incompatible with autoopen_whitelist
 - "print_ongoing" (bool): If you wish to be notified as a program is ongoing, of the std and stderr outputs, this will print them in the status line.
@@ -191,6 +192,9 @@ This also allows for each of the objects to be bound to xb1-9, as, it matches by
 This allows for an easily configurable, portable unix focused testing apparatus. Developers can replace the envvars and build commands become usable to them.
 
 ## Notes
+### The name is not used to call the build command, the key is 
+You don't call "Generate RPC", you call *2*, If it were called "generate_RPC" then you would call that. Keep in mind that the keys **cannot contain spaces as of right now**,
+
 ### Maximum number of commands 
 This is **no maximum** number of commands. ABExecute, as described below, takes in an arbitrary integer. In the suggested keymap, <leader>xb0 fills the command with ABExecute but without cr, to make arbitrary indexes and using arguments easier 
 
@@ -227,7 +231,7 @@ vim.keymap.set("n", "<leader>xba", "<cmd>ShowOngoing<cr>", {})
 {
   "build_commands": {
     "1": {
-      "name": "Nvim Args Example",
+      "name": "nvim Args Example",
       "shell_cmd": "I like $ARG1 and I also like $ARG2",
       "cwd": "./src/"
     }
@@ -244,7 +248,7 @@ ABView opens a telescope with all commands executed, from oldest to newest. Hitt
 - This is not persistent between startups, and is saved in memory. 
 
 ## :ABShowOngoing
-There is an obvious issue with executing commands with &, and not logging the PID. For a lot of shell commands, you need to kill them, eventually. Hence ABShowOngoing.
+There is an obvious issue with executing commands with &, and not logging the PID. For a lot of shell commands, you need to kill them, eventually. Hence ABShowOngoing
 
 - After a task is started with ABExecute it is added to `_G.OngoingPid`, and, as new lines come from stdout and stderr, it is added to the given PID's `std` value
 
