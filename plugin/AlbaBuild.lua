@@ -53,13 +53,23 @@ function _G.addToOngoingStd(pid, line)
 
 	for i, buf in ipairs(_G.OngoingPid[pid].bufs) do
 		if buf ~= nil then
-			local success, _ = pcall(function()
+			local success, output = pcall(function()
+				local result = false
 				vim.schedule(function()
-					vim.api.nvim_buf_set_lines(buf, 0, -1, false, _G.OngoingPid[pid].std)
+					vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
+					local isModifiable = vim.api.nvim_get_option_value("modifiable", { buf = buf })
+					if not isModifiable then
+						result = false
+					else
+						vim.api.nvim_buf_set_lines(buf, 0, -1, false, _G.OngoingPid[pid].std)
+						vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
+						result = true
+					end
 				end)
+				return result
 			end)
-			if not success then
-				print("ded lol")
+			if not success or not output then
+				--print("ded lol")
 				_G.OngoingPid[pid].bufs[i] = nil
 			end
 		end
@@ -345,7 +355,7 @@ alb.RunCommand = function(ops, output, useSync)
 
 	addNewOnGoing(j.pid, jsonBuildCommandsSelected.name, time)
 
-	if jsonBuildCommandsSelected.open_ongoing then
+	if jsonBuildCommandsSelected.autoopen_ongoing then
 		vim.cmd("new")
 		local buf = vim.api.nvim_get_current_buf()
 		_G.addStdWindowListener(j.pid, buf)
@@ -477,7 +487,7 @@ function ShowOngoing()
 					local key = keys[currentIndex]
 					_G.addStdWindowListener(tonumber(key), buf)
 					vim.api.nvim_buf_set_lines(buf, 0, -1, false, test[tonumber(key)].std)
-					vim.bo.modifiable = true
+					vim.bo.modifiable = false
 					vim.bo.buftype = "nofile"
 					vim.bo.bufhidden = "hide"
 					vim.bo.swapfile = false

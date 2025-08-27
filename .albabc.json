@@ -14,7 +14,8 @@
       "name": "Kill test",
       "shell_cmd": "while true; do date +'%Y-%m-%d %H%M:%S'; sleep 1 ; done",
       "cwd": ".",
-      "autoopen_ongoing": true
+      "autoopen_ongoing": true,
+      "print_ongoing": true
     },
     "3": {
       "name": "env_var test",
