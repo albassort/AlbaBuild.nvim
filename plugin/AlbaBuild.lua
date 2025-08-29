@@ -54,7 +54,7 @@ function _G.addToOngoingStd(pid, line)
 	for i, buf in ipairs(_G.OngoingPid[pid].bufs) do
 		if buf ~= nil then
 			local success, output = pcall(function()
-				local result = false
+				local result = true
 				vim.schedule(function()
 					vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
 					local isModifiable = vim.api.nvim_get_option_value("modifiable", { buf = buf })
@@ -63,7 +63,6 @@ function _G.addToOngoingStd(pid, line)
 					else
 						vim.api.nvim_buf_set_lines(buf, 0, -1, false, _G.OngoingPid[pid].std)
 						vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
-						result = true
 					end
 				end)
 				return result
@@ -249,7 +248,11 @@ alb.RunCommand = function(ops, output, useSync)
 
 	if mandatoryArgs ~= nil and mandatoryArgs > nArgs then
 		print("Less args provided than the minimum: " .. tostring(mandatoryArgs))
-		print(jsonBuildCommandsSelected.prompt)
+
+		if jsonBuildCommandsSelected.prompt ~= nil then
+			print(jsonBuildCommandsSelected.prompt)
+		end
+
 		vim.api.nvim_feedkeys(":ABExecute " .. index .. " ", "n", false)
 		return
 	end
@@ -274,7 +277,6 @@ alb.RunCommand = function(ops, output, useSync)
 		table.insert(entries, value.name)
 	end
 
-	print(targetCommands)
 	local relapth = targetCommands:parent():joinpath(jsonBuildCommandsSelected.cwd)
 	if relapth:exists() == false then
 		print("The cwd provided does not exist!")
@@ -360,6 +362,11 @@ alb.RunCommand = function(ops, output, useSync)
 
 	if jsonBuildCommandsSelected.autoopen_ongoing then
 		vim.cmd("new")
+		vim.bo.modifiable = false
+		vim.bo.buftype = "nofile"
+		vim.bo.bufhidden = "hide"
+		vim.bo.swapfile = false
+
 		local buf = vim.api.nvim_get_current_buf()
 		_G.addStdWindowListener(j.pid, buf)
 	end
@@ -457,7 +464,7 @@ function ShowOngoing()
 	local opts = opts or {}
 	pickers
 		.new(opts, {
-			prompt_title = "Kill ongoing task. Enter to kill, Q to exit, O to open",
+			prompt_title = "Kill ongoing task. Enter to kill, Q to exit, o to open",
 			finder = finders.new_table({
 				results = keys,
 			}),
