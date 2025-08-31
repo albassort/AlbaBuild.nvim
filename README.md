@@ -1,4 +1,4 @@
-## What is AlbaBuild.nvim
+# What is AlbaBuild.nvim?
 AlbaBuild.nvim is a simple, git portable, json configured, hotkey-driven, build system for nvim
 
 AlbaBuild.nvim is a simple nvim plugin, to allow build commands to be hotkey-bound and embedded in git repositories. This enables you to simplify your work flow, remove repetitive terminal usage, and get new contributors in sync with established contributors easier.
@@ -24,6 +24,13 @@ It is
 ### Why?
 
 I have, for years, only ever programmed with a terminal open, somewhere. Be it on a different monitors, different tab, using :term, using screen or tmux, etc. And, usually its with predefined commands. I will often loose, or forget about one, and have to rewrite it if its not saved in a .sh. And, critically, if I were to leave and comeback to a given repository over years, I would need to relearn the commands, and what they do. This is my solution to streamline this process.
+
+### In Action
+
+I made two videos for this project!
+
+1. [An Overview](https://www.youtube.com/watch?v=XWa4x-U6Rkk)
+2. [A lets code where I use it in a very simple way in python](https://www.youtube.com/watch?v=cTpaKcjVFok)
 
 ## Lazy
 
@@ -282,6 +289,7 @@ adding `-u` to python3 allows it to run in unbuffered mode, for which, this ceas
 
 # TODO 
 - Implement standard testing (plenary testing breaks shell commands for some reason)
+- Maybe add a command to explicitly force use the root .albabc.json for convenience? E.g `<leader>Xb1-9`?
 
 ##### Support
 *If you like the project, and wish to show your support, you can go to [page](https://donate.albassort.com) where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.*

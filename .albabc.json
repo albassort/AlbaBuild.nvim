@@ -5,10 +5,9 @@
   "build_commands": {
     "1": {
       "name": "Hello, World!",
-      "shell_cmd": "echo 'Hello, World!2'",
+      "shell_cmd": "echo 'Hello, World!'",
       "cwd": ".",
-      "autoopen": true,
-      "print_result": false
+      "autoopen": true
     },
     "2": {
       "name": "Kill test",
@@ -65,7 +64,7 @@
     },
     "9": {
       "name": "Mandatory args test",
-      "shell_cmd": "echo $ARG1; exit 0",
+      "shell_cmd": "echo $ARG1 $ARG2; exit 0",
       "cwd": ".",
       "prompt": "This guy wants some extra commands!",
       "min_args": 2,
@@ -78,7 +77,7 @@
     },
     "named_test2": {
       "name": "Hello I am named. I also take args, and open if they are wrong!",
-      "shell_cmd": "if [ \"$ARG1\" != 'Hello' ]; then echo '$ARG1'; exit 1; fi",
+      "shell_cmd": "if [ \"$ARG1\" != 'Hello' ]; then echo \"$ARG1\"; exit 1; fi",
       "cwd": ".",
       "min_args": 1,
       "autoopen_whitelist": [

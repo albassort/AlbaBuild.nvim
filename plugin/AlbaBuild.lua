@@ -299,7 +299,7 @@ alb.RunCommand = function(ops, output, useSync)
 			if line then
 				if jsonBuildCommandsSelected.print_ongoing then
 					vim.schedule_wrap(function()
-						print(line)
+						vim.notify(line)
 					end)()
 				end
 				addToOngoingStd(j.pid, line)
@@ -310,7 +310,7 @@ alb.RunCommand = function(ops, output, useSync)
 			if line then
 				if jsonBuildCommandsSelected.print_ongoing then
 					vim.schedule_wrap(function()
-						print(vim.inspect(line))
+						vim.notify(line)
 					end)()
 				end
 				addToOngoingStd(j.pid, line)
