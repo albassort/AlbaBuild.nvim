@@ -22,7 +22,7 @@ It is
 - Makes you the coolest (or least cool?) person working on a given project, or your (no) money back!
 
 
-![Diagram](img/embed.png)
+![embed](img/embed.gif)
 
 ### Why?
 
