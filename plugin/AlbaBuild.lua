@@ -63,6 +63,11 @@ function _G.addToOngoingStd(pid, line)
 					else
 						vim.api.nvim_buf_set_lines(buf, 0, -1, false, _G.OngoingPid[pid].std)
 						vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
+						local wins = vim.fn.win_findbuf(buf)
+						for i, win in ipairs(wins) do
+							local lineCount = vim.api.nvim_buf_line_count(buf)
+							vim.api.nvim_win_set_cursor(win, { lineCount, 0 })
+						end
 					end
 				end)
 				return result
