@@ -291,5 +291,5 @@ adding `-u` to python3 allows it to run in unbuffered mode, for which, this ceas
 - Implement standard testing (plenary testing breaks shell commands for some reason)
 - Maybe add a command to explicitly force use the root .albabc.json for convenience? E.g `<leader>Xb1-9`?
 
-##### Support
-*If you like the project, and wish to show your support, you can go to [page](https://donate.albassort.com) where you send me XMR, BTC, and SOL. Anything is deeply appreciated, and keeps me motivated. Thank you.*
+###### Support
+*If you like the project, and wish to show your support, please star this repository.*
