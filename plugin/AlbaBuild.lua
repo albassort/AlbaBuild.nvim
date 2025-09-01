@@ -211,6 +211,10 @@ alb.RunCommand = function(ops, output, useSync)
 	end
 
 	local jsonBuildCommands = jsonResult.build_commands
+	if not jsonBuildCommands then
+		print("build_commands is nil! " .. fileName .. " requires a build_commands be in the root of the json object")
+		return
+	end
 	local env_vars = jsonResult.env_vars or {}
 	env_vars["BUF"] = vim.api.nvim_buf_get_name(0)
 	-- When output is nil its being used in a debugging context
@@ -230,6 +234,7 @@ alb.RunCommand = function(ops, output, useSync)
 	-- print(vim.inspect(ops.fargs))
 	-- print(vim.inspect(index))
 	-- print(vim.inspect(ops))
+	-- print(vim.inspect(jsonBuildCommands))
 	local jsonBuildCommandsSelected = jsonBuildCommands[index] or jsonBuildCommands[tonumber(index)]
 	if jsonBuildCommandsSelected == nil then
 		print("The command provided was not found in the .albabc.json. Please check its formatting.")
@@ -508,7 +513,6 @@ function ShowOngoing()
 		})
 		:find()
 end
--- to execute the function
 
 vim.api.nvim_create_user_command("ABExecute", alb.RunCommand, { nargs = "+" })
 
@@ -516,22 +520,24 @@ vim.api.nvim_create_user_command("ABView", ShowResults, {})
 
 vim.api.nvim_create_user_command("ABShowOngoing", ShowOngoing, {})
 
-vim.keymap.set("n", "<leader>xb1", "<cmd>ABExecute 1<cr>", {})
-vim.keymap.set("n", "<leader>xb2", "<cmd>ABExecute 2<cr>", {})
-vim.keymap.set("n", "<leader>xb3", "<cmd>ABExecute 3<cr>", {})
-vim.keymap.set("n", "<leader>xb4", "<cmd>ABExecute 4<cr>", {})
-vim.keymap.set("n", "<leader>xb5", "<cmd>ABExecute 5<cr>", {})
-vim.keymap.set("n", "<leader>xb6", "<cmd>ABExecute 6<cr>", {})
-vim.keymap.set("n", "<leader>xb7", "<cmd>ABExecute 7<cr>", {})
-vim.keymap.set("n", "<leader>xb8", "<cmd>ABExecute 8<cr>", {})
-vim.keymap.set("n", "<leader>xb9", "<cmd>ABExecute 9<cr>", {})
+-- Recommended commands:
 
-vim.keymap.set("n", "<leader>xbs", "<cmd>ABView<cr>", {})
-vim.keymap.set("n", "<leader>xba", "<cmd>ABShowOngoing<cr>", {})
-
-vim.api.nvim_set_keymap("n", "<leader>xb5", ":ABExecute 5 ", {})
-
-vim.api.nvim_set_keymap("n", "<leader>xb0", ":ABExecute ", {})
---v-vim.keymap.set("n", "<leader>xbl", "<cmd>:source ~/.config/nvim/lua/config/keymaps.lua <CR>")
+-- vim.keymap.set("n", "<leader>xb1", "<cmd>ABExecute 1<cr>", {})
+-- vim.keymap.set("n", "<leader>xb2", "<cmd>ABExecute 2<cr>", {})
+-- vim.keymap.set("n", "<leader>xb3", "<cmd>ABExecute 3<cr>", {})
+-- vim.keymap.set("n", "<leader>xb4", "<cmd>ABExecute 4<cr>", {})
+-- vim.keymap.set("n", "<leader>xb5", "<cmd>ABExecute 5<cr>", {})
+-- vim.keymap.set("n", "<leader>xb6", "<cmd>ABExecute 6<cr>", {})
+-- vim.keymap.set("n", "<leader>xb7", "<cmd>ABExecute 7<cr>", {})
+-- vim.keymap.set("n", "<leader>xb8", "<cmd>ABExecute 8<cr>", {})
+-- vim.keymap.set("n", "<leader>xb9", "<cmd>ABExecute 9<cr>", {})
+--
+-- vim.keymap.set("n", "<leader>xbs", "<cmd>ABView<cr>", {})
+-- vim.keymap.set("n", "<leader>xba", "<cmd>ABShowOngoing<cr>", {})
+--
+-- vim.api.nvim_set_keymap("n", "<leader>xb5", ":ABExecute 5 ", {})
+--
+-- vim.api.nvim_set_keymap("n", "<leader>xb0", ":ABExecute ", {})
+--
 
 return alb
